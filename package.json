@@ -1,7 +1,7 @@
 {
-  "name": "component-console",
+  "name": "component-consoler",
   "description": "console commands for component(1)",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "license": "MIT",
   "repository": "component/console.js"
 }
