@@ -1,14 +1,38 @@
 
+var debug = require('debug')('component-consoler');
+
+/**
+ * Error types where we show the stack trace.
+ * These are generally user errors,
+ * not "our" errors.
+ */
+
+var showstack = [
+  'ParseError',
+  'SyntaxError',
+  'URIError',
+];
+
 /**
  * Output fatal error message and exit.
+ * Depending on the error type, show the stack trace.
  *
  * @param {String} msg
  * @api private
  */
 
-exports.fatal = function(){
+
+exports.fatal = function(err){
+  if (err instanceof Error) {
+    debug(err.stack);
+    if (~showstack.indexOf(err.name)) {
+      err = err.stack;
+    } else {
+      err = err.message;
+    }
+  }
   console.error();
-  exports.error.apply(null, arguments);
+  exports.error(err);
   console.error();
   process.exit(1);
 };
