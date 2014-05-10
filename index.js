@@ -25,7 +25,7 @@ var showstack = [
 exports.fatal = function(err){
   if (err instanceof Error) {
     debug(err.stack);
-    if (~showstack.indexOf(err.name)) {
+    if (err.stack && ~showstack.indexOf(err.name)) {
       err = err.stack;
     } else {
       err = err.message;
