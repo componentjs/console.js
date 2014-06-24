@@ -1,81 +1,115 @@
-
 var debug = require('debug')('component-consoler');
+var slice = Array.prototype.slice;
 
 /**
  * Error types where we show the stack trace.
- * These are generally user errors,
- * not "our" errors.
- */
-
+ * These are generally user errors, not "our" errors.
+ **/
 var showstack = [
   'ParseError',
   'SyntaxError',
-  'URIError',
+  'URIError'
 ];
 
 /**
- * Output fatal error message and exit.
+ * Log message with `type` and `message` interpolated by `substitutes`.
+ *
+ * @param {String} type
+ * @param {String} message
+ * @param {...String} [substitutes]
+ * @api public
+**/
+exports.log = function (type, message /*, substitutes */) {
+  log('log', 36, type, message, slice.call(arguments, 2));
+};
+
+/**
+ * Log warning message with `type` and `message` interpolated by `substitutes`.
+ *
+ * @param {String} type
+ * @param {String} message
+ * @param {...String} [substitutes]
+ * @api public
+**/
+exports.warn = function (type, message /*, substitutes */) {
+  log('warn', 33, type, message, slice.call(arguments, 2));
+};
+
+/**
+ * Log error message with "error" type and `message` interpolated by `substitutes`.
+ *
+ * @param {String} message
+ * @param {...String} [substitutes]
+ * @api public
+**/
+exports.error = function (message /*, substitutes */) {
+  log('error', 31, 'error', message, slice.call(arguments, 1));
+};
+
+/**
+ * Log error message and exit with "fatal" type and `error` interpolated by `substitutes`.
  * Depending on the error type, show the stack trace.
  *
- * @param {String} msg
- * @api private
- */
+ * @param {String|Error} error
+ * @param {...String} [substitutes]
+ * @api public
+**/
+exports.fatal = function (error /*, substitutes */) {
+  var message = error;
 
+  if (error instanceof Error) {
+    debug(error.stack);
 
-exports.fatal = function(err){
-  if (err instanceof Error) {
-    debug(err.stack);
-    if (err.stack && ~showstack.indexOf(err.name)) {
-      err = err.stack;
+    if (error.stack && ~showstack.indexOf(error.name)) {
+      message = error.stack;
     } else {
-      err = err.message;
+      message = error.message;
     }
   }
+
   console.error();
-  exports.error(err);
+  log('error', 31, 'fatal', message, slice.call(arguments, 1));
   console.error();
   process.exit(1);
 };
 
 /**
- * Log the given `type` with `msg`.
+ * Log message in console `method` with `color`, `type`, `message`, `substitutes`.
  *
+ * @param {String} method
+ * @param {Number} color
  * @param {String} type
- * @param {String} msg
- * @api public
- */
-
-exports.log = function(type, msg, color){
-  color = color || '36';
-  var w = 10;
-  var len = Math.max(0, w - type.length);
-  var pad = Array(len + 1).join(' ');
-  console.log('  \033[' + color + 'm%s\033[m : \033[90m%s\033[m', pad + type, msg);
-};
-
-/**
- * Log warning message with `type` and `msg`.
- *
- * @param {String} type
- * @param {String} msg
- * @api public
- */
-
-exports.warn = function(type, msg){
-  exports.log(type, msg, '33');
-};
-
-/**
- * Output error message.
- *
- * @param {String} msg
+ * @param {String} message
+ * @param {String[]} substitues
  * @api private
- */
+**/
+function log (method, color, type, message, substitutes) {
+  console[method].apply(console, [stylize(type, message, color)].concat(substitutes));
+}
 
-exports.error = function(msg){
-  var w = 10;
-  var type = 'error';
-  var len = Math.max(0, w - type.length);
-  var pad = Array(len + 1).join(' ');
-  console.error('  \033[31m%s\033[m : \033[90m%s\033[m', pad + type, msg);
-};
+/**
+ * Stylize message, use `color` for `type` before `message`.
+ *
+ * @param {String} type
+ * @param {String} message
+ * @param {Number} color
+ * @return {String}
+ * @api private
+**/
+function stylize (type, message, color) {
+  return '  \033[' + color + 'm' + pad(type) + '\033[m : \033[90m' + message + '\033[m';
+}
+
+/**
+ * Add whitespace indentation before text.
+ *
+ * @param {String} text
+ * @return {String}
+ * @api private
+**/
+function pad (text) {
+  var width = 10;
+  var length = Math.max(0, width - text.length);
+  var space = Array(length + 1).join(' ');
+  return space + text;
+}
